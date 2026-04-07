@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inventory Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f4f0;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,0.08);
+      --text-primary: #1a1a18;
+      --text-secondary: #6b6b67;
+      --text-tertiary: #9b9b97;
+      --blue: #2563eb;
+      --blue-light: #eff6ff;
+      --green: #16a34a;
+      --green-light: #f0fdf4;
+      --amber: #d97706;
+      --amber-light: #fffbeb;
+      --red: #dc2626;
+      --red-light: #fef2f2;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+    .logo { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; }
+    .logo-icon { width: 28px; height: 28px; background: var(--text-primary); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+    .logo-icon svg { width: 16px; height: 16px; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .last-updated { font-size: 12px; color: var(--text-tertiary); font-family: 'DM Mono', monospace; }
+    .btn { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 7px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); cursor: pointer; transition: all 0.15s; }
+    .btn:hover { background: var(--bg); }
+    .btn-primary { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
+    .btn-primary:hover { opacity: 0.85; background: var(--text-primary); }
+    main { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+    .page-title { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+    .page-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 1.5rem; }
+    .alert-banner { display: flex; align-items: center; gap: 10px; background: var(--amber-light); border: 1px solid rgba(217,119,6,0.2); border-radius: var(--radius-sm); padding: 10px 16px; margin-bottom: 1.5rem; font-size: 13px; color: #92400e; }
+    .alert-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); flex-shrink: 0; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 1.5rem; }
+    .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; transition: transform 0.15s; }
+    .metric:hover { transform: translateY(-1px); }
+    .metric-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .metric-value { font-size: 26px; font-weight: 600; line-height: 1; margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+    .metric-sub { font-size: 12px; color: var(--text-secondary); }
+    .m1 { border-top: 3px solid var(--text-primary); }
+    .m2 { border-top: 3px solid var(--blue); }
+    .m3 { border-top: 3px solid var(--green); }
+    .m4 { border-top: 3px solid var(--amber); }
+    .charts-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; margin-bottom: 1.5rem; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+    .card-title { font-size: 14px; font-weight: 600; margin-bottom: 1rem; }
+    .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.05em; }
+    td { font-size: 13px; padding: 12px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg); }
+    .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
+    .badge-ok { background: var(--green-light); color: var(--green); }
+    .badge-low { background: var(--amber-light); color: var(--amber); }
+    .badge-critical { background: var(--red-light); color: var(--red); }
+    .add-form { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+    input { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text-primary); outline: none; transition: border-color 0.15s; width: 100%; }
+    input:focus { border-color: var(--text-primary); background: var(--surface); }
+    .loading { text-align: center; padding: 3rem; color: var(--text-tertiary); font-size: 14px; }
+    .error-msg { background: var(--red-light); color: var(--red); border: 1px solid rgba(220,38,38,0.2); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; margin-bottom: 1rem; }
+    .success-msg { background: var(--green-light); color: var(--green); border: 1px solid rgba(22,163,74,0.2); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; margin-bottom: 1rem; }
+    @media(max-width:768px){ main{padding:1rem} .metrics{grid-template-columns:repeat(2,1fr)} .charts-row{grid-template-columns:1fr} .add-form{grid-template-columns:1fr 1fr} }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" fill="white"/><rect x="9" y="2" width="5" height="5" rx="1" fill="white"/><rect x="2" y="9" width="5" height="5" rx="1" fill="white"/><rect x="9" y="9" width="5" height="5" rx="1" fill="white"/></svg>
+    </div>
+    Inventory Manager
+  </div>
+  <div class="header-right">
+    <span class="last-updated" id="last-updated">—</span>
+    <button class="btn" onclick="loadData()">Refresh</button>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">Dashboard</div>
+  <div class="page-sub">Real-time inventory connected to your AWS RDS database</div>
+
+  <div id="alert-area"></div>
+  <div id="error-area"></div>
+  <div id="success-area"></div>
+
+  <div class="metrics">
+    <div class="metric m1">
+      <div class="metric-label">Total products</div>
+      <div class="metric-value" id="m-total">—</div>
+      <div class="metric-sub">unique items</div>
+    </div>
+    <div class="metric m2">
+      <div class="metric-label">Total units</div>
+      <div class="metric-value" id="m-units">—</div>
+      <div class="metric-sub">in stock</div>
+    </div>
+    <div class="metric m3">
+      <div class="metric-label">Total value</div>
+      <div class="metric-value" id="m-value">—</div>
+      <div class="metric-sub">inventory worth</div>
+    </div>
+    <div class="metric m4">
+      <div class="metric-label">Low stock alerts</div>
+      <div class="metric-value" id="m-alerts">—</div>
+      <div class="metric-sub">need reordering</div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="card">
+      <div class="card-title">Stock levels by product</div>
+      <div id="legend1" class="legend"></div>
+      <div style="position:relative;height:240px;"><canvas id="chart1"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Value distribution</div>
+      <div id="legend2" class="legend"></div>
+      <div style="position:relative;height:240px;"><canvas id="chart2"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-title">Add new item</div>
+    <div class="add-form">
+      <div class="form-group">
+        <label class="form-label">Product name</label>
+        <input type="text" id="f-name" placeholder="e.g. Laptop"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quantity</label>
+        <input type="number" id="f-qty" placeholder="e.g. 10" min="0"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Price ($)</label>
+        <input type="number" id="f-price" placeholder="e.g. 99.99" min="0" step="0.01"/>
+      </div>
+      <button class="btn btn-primary" onclick="addItem()">Add item</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">All inventory items</div>
+    <div id="table-area"><div class="loading">Loading inventory...</div></div>
+  </div>
+</main>
+
+<script>
+const API = 'https://3kscjb73u8.execute-api.ca-central-1.amazonaws.com/Inventory';
+const COLORS = ['#2563eb','#0d9488','#d97706','#7c3aed','#e84545','#16a34a','#1d4ed8','#b45309'];
+let chart1, chart2;
+
+function stockStatus(qty) {
+  if (qty <= 2) return ['critical','Critical'];
+  if (qty <= 5) return ['low','Low stock'];
+  return ['ok','In stock'];
+}
+
+function buildLegend(elId, labels, colors) {
+  document.getElementById(elId).innerHTML = labels.map((l,i) =>
+    `<span class="legend-item"><span class="legend-dot" style="background:${colors[i%colors.length]}"></span>${l}</span>`
+  ).join('');
+}
+
+function showError(msg) {
+  document.getElementById('error-area').innerHTML = `<div class="error-msg">${msg}</div>`;
+  setTimeout(() => document.getElementById('error-area').innerHTML = '', 5000);
+}
+
+function showSuccess(msg) {
+  document.getElementById('success-area').innerHTML = `<div class="success-msg">${msg}</div>`;
+  setTimeout(() => document.getElementById('success-area').innerHTML = '', 3000);
+}
+
+function loadData() {
+  document.getElementById('last-updated').textContent = 'Loading...';
+  fetch(API)
+    .then(r => r.json())
+    .then(data => {
+      const items = data.filter(d => !d.name.toLowerCase().includes('test'));
+      document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+      const totalUnits = items.reduce((s,i) => s + i.quantity, 0);
+      const totalValue = items.reduce((s,i) => s + (i.quantity * i.price), 0);
+      const lowStock = items.filter(i => i.quantity <= 5);
+
+      document.getElementById('m-total').textContent = items.length;
+      document.getElementById('m-units').textContent = totalUnits;
+      document.getElementById('m-value').textContent = '$' + totalValue.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      document.getElementById('m-alerts').textContent = lowStock.length;
+
+      document.getElementById('alert-area').innerHTML = lowStock.length > 0
+        ? `<div class="alert-banner"><div class="alert-dot"></div><span>Low stock warning: <strong>${lowStock.map(i=>i.name).join(', ')}</strong> need reordering</span></div>`
+        : '';
+
+      const labels = items.map(i => i.name);
+      const qtys = items.map(i => i.quantity);
+      const vals = items.map(i => parseFloat((i.quantity * i.price).toFixed(2)));
+      const colors = labels.map((_,i) => COLORS[i % COLORS.length]);
+
+      buildLegend('legend1', labels, colors);
+      buildLegend('legend2', labels, colors);
+
+      if (chart1) chart1.destroy();
+      if (chart2) chart2.destroy();
+
+      chart1 = new Chart(document.getElementById('chart1'), {
+        type: 'bar',
+        data: { labels, datasets: [{ data: qtys, backgroundColor: colors, borderRadius: 6, borderSkipped: false }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { font: { size: 11, family: 'DM Sans' }, autoSkip: false, maxRotation: 30 }, grid: { display: false }, border: { display: false } },
+            y: { ticks: { font: { size: 11, family: 'DM Sans' } }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { display: false } }
+          }
+        }
+      });
+
+      chart2 = new Chart(document.getElementById('chart2'), {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data: vals, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          cutout: '65%'
+        }
+      });
+
+      document.getElementById('table-area').innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th style="width:50px">ID</th>
+              <th>Product</th>
+              <th style="width:90px;text-align:right">Qty</th>
+              <th style="width:100px;text-align:right">Price</th>
+              <th style="width:120px;text-align:right">Value</th>
+              <th style="width:100px;text-align:center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(i => {
+              const [cls, label] = stockStatus(i.quantity);
+              return `<tr>
+                <td style="color:var(--text-tertiary);font-family:'DM Mono',monospace;font-size:12px">#${i.id}</td>
+                <td style="font-weight:500">${i.name}</td>
+                <td style="text-align:right;font-family:'DM Mono',monospace">${i.quantity}</td>
+                <td style="text-align:right;font-family:'DM Mono',monospace">$${i.price.toFixed(2)}</td>
+                <td style="text-align:right;font-family:'DM Mono',monospace">$${(i.quantity*i.price).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
+                <td style="text-align:center"><span class="badge badge-${cls}">${label}</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`;
+    })
+    .catch(err => {
+      document.getElementById('last-updated').textContent = 'Failed to load';
+      showError('Could not connect to API: ' + err.message + '. Check CORS settings in API Gateway.');
+    });
+}
+
+function addItem() {
+  const name = document.getElementById('f-name').value.trim();
+  const qty = parseInt(document.getElementById('f-qty').value);
+  const price = parseFloat(document.getElementById('f-price').value);
+
+  if (!name || isNaN(qty) || isNaN(price)) {
+    showError('Please fill in all fields correctly.');
+    return;
+  }
+
+  fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, quantity: qty, price })
+  })
+  .then(r => r.json())
+  .then(() => {
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-qty').value = '';
+    document.getElementById('f-price').value = '';
+    showSuccess('Item added successfully!');
+    loadData();
+  })
+  .catch(err => showError('Failed to add item: ' + err.message));
+}
+
+loadData();
+</script>
+</body>
+</html>
