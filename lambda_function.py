@@ -15,13 +15,10 @@ def lambda_handler(event, context):
 
     if method == 'OPTIONS':
         return {
-    "statusCode": 200,
-    "headers": headers,
-    "body": json.dumps({
-        "version": "v3",
-        "items": items
-    })
-}
+            "statusCode": 200,
+            "headers": headers,
+            "body": json.dumps("OK")
+        }
 
     try:
         conn = psycopg2.connect(
@@ -111,9 +108,9 @@ def lambda_handler(event, context):
 
         if method == 'GET':
             cur.execute("""
-                SELECT id, name, quantity, price, sku, 
-                       reorder_point, lead_time_days, category 
-                FROM inventory 
+                SELECT id, name, quantity, price, sku,
+                       reorder_point, lead_time_days, category
+                FROM inventory
                 ORDER BY id DESC
             """)
             rows = cur.fetchall()
@@ -134,14 +131,17 @@ def lambda_handler(event, context):
             return {
                 "statusCode": 200,
                 "headers": headers,
-                "body": json.dumps(items)
+                "body": json.dumps({
+                    "version": "v3",
+                    "items": items
+                })
             }
 
         elif method == 'POST':
             body = json.loads(event['body'])
             cur.execute(
-                """INSERT INTO inventory 
-                   (name, quantity, price, sku, reorder_point, lead_time_days, category) 
+                """INSERT INTO inventory
+                   (name, quantity, price, sku, reorder_point, lead_time_days, category)
                    VALUES (%s, %s, %s, %s, %s, %s, %s)""",
                 (
                     body['name'],
@@ -153,13 +153,11 @@ def lambda_handler(event, context):
                     body.get('category', None)
                 )
             )
-
             cur.execute("""
-                INSERT INTO inventory_transactions 
+                INSERT INTO inventory_transactions
                 (inventory_id, transaction_type, quantity, notes)
                 VALUES (currval('inventory_id_seq'), 'restock', %s, 'Initial stock')
             """, (body['quantity'],))
-
             conn.commit()
             cur.close()
             conn.close()
