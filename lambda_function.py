@@ -1,4 +1,4 @@
-# Inventory Tracking System v2
+# Inventory Tracking System v3
 import json
 import psycopg2
 import os
@@ -15,10 +15,10 @@ def lambda_handler(event, context):
 
     if method == 'OPTIONS':
         return {
-            "statusCode": 200,
-            "headers": headers,
-            "body": json.dumps("OK")
-        }
+    "statusCode": 200,
+    "headers": headers,
+    "body": json.dumps({"version": "v3", "items": items})
+}
 
     try:
         conn = psycopg2.connect(
