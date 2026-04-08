@@ -17,7 +17,10 @@ def lambda_handler(event, context):
         return {
     "statusCode": 200,
     "headers": headers,
-    "body": json.dumps({"version": "v3", "items": items})
+    "body": json.dumps({
+        "version": "v3",
+        "items": items
+    })
 }
 
     try:
