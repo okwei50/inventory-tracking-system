@@ -1,0 +1,29 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region ca-central-1 | docker login --username AWS --password-stdin 899259776056.dkr.ecr.ca-central-1.amazonaws.com
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+
+  build:
+    commands:
+      - echo Building Docker image...
+      - docker build --platform linux/amd64 --provenance=false -t inventory-lambda:$IMAGE_TAG .
+      - docker tag inventory-lambda:$IMAGE_TAG 899259776056.dkr.ecr.ca-central-1.amazonaws.com/inventory-lambda:$IMAGE_TAG
+      - docker tag inventory-lambda:$IMAGE_TAG 899259776056.dkr.ecr.ca-central-1.amazonaws.com/inventory-lambda:latest
+
+  post_build:
+    commands:
+      - echo Pushing Docker image to ECR...
+      - docker push 899259776056.dkr.ecr.ca-central-1.amazonaws.com/inventory-lambda:$IMAGE_TAG
+      - docker push 899259776056.dkr.ecr.ca-central-1.amazonaws.com/inventory-lambda:latest
+      - echo Updating Lambda function...
+      - aws lambda update-function-code --function-name inventory-function-docker --image-uri 899259776056.dkr.ecr.ca-central-1.amazonaws.com/inventory-lambda:latest --region ca-central-1
+      - echo Uploading dashboard to S3...
+      - aws s3 cp index.html s3://inventory-data-buckett/index.html --content-type text/html
+      - echo Invalidating CloudFront cache...
+      - aws cloudfront create-invalidation --distribution-id $(aws cloudfront list-distributions --query "DistributionList.Items[?Origins.Items[0].DomainName=='inventory-data-buckett.s3-website.ca-central-1.amazonaws.com'].Id" --output text) --paths "/*"
+      - echo Deployment complete!
+
