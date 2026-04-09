@@ -9,11 +9,22 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #f5f4f0; --surface: #ffffff; --border: rgba(0,0,0,0.08);
-      --text-primary: #1a1a18; --text-secondary: #6b6b67; --text-tertiary: #9b9b97;
-      --blue: #2563eb; --blue-light: #eff6ff; --green: #16a34a; --green-light: #f0fdf4;
-      --amber: #d97706; --amber-light: #fffbeb; --red: #dc2626; --red-light: #fef2f2;
-      --radius: 12px; --radius-sm: 8px;
+      --bg: #f5f4f0;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,0.08);
+      --text-primary: #1a1a18;
+      --text-secondary: #6b6b67;
+      --text-tertiary: #9b9b97;
+      --blue: #2563eb;
+      --blue-light: #eff6ff;
+      --green: #16a34a;
+      --green-light: #f0fdf4;
+      --amber: #d97706;
+      --amber-light: #fffbeb;
+      --red: #dc2626;
+      --red-light: #fef2f2;
+      --radius: 12px;
+      --radius-sm: 8px;
     }
     body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; }
     header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
@@ -49,28 +60,27 @@
     .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
     .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    th { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.05em; }
-    td { font-size: 12px; padding: 10px; border-bottom: 1px solid var(--border); }
+    th { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.05em; }
+    td { font-size: 13px; padding: 12px; border-bottom: 1px solid var(--border); }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: var(--bg); }
     .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
     .badge-ok { background: var(--green-light); color: var(--green); }
     .badge-low { background: var(--amber-light); color: var(--amber); }
     .badge-critical { background: var(--red-light); color: var(--red); }
-    .cat-badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 20px; background: #eff6ff; color: #2563eb; }
-    .add-form { display: grid; grid-template-columns: repeat(3, 1fr) repeat(3, 1fr) auto; gap: 8px; align-items: end; margin-bottom: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+    .add-form { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
     .form-group { display: flex; flex-direction: column; gap: 4px; }
     .form-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
-    input { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text-primary); outline: none; transition: border-color 0.15s; width: 100%; }
+    input { font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text-primary); outline: none; transition: border-color 0.15s; width: 100%; }
     input:focus { border-color: var(--text-primary); background: var(--surface); }
     .loading { text-align: center; padding: 3rem; color: var(--text-tertiary); font-size: 14px; }
     .error-msg { background: var(--red-light); color: var(--red); border: 1px solid rgba(220,38,38,0.2); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; margin-bottom: 1rem; }
     .success-msg { background: var(--green-light); color: var(--green); border: 1px solid rgba(22,163,74,0.2); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; margin-bottom: 1rem; }
-    .version-tag { font-size: 11px; background: var(--green-light); color: var(--green); padding: 2px 8px; border-radius: 20px; font-family: 'DM Mono', monospace; }
     @media(max-width:768px){ main{padding:1rem} .metrics{grid-template-columns:repeat(2,1fr)} .charts-row{grid-template-columns:1fr} .add-form{grid-template-columns:1fr 1fr} }
   </style>
 </head>
 <body>
+
 <header>
   <div class="logo">
     <div class="logo-icon">
@@ -79,17 +89,19 @@
     Inventory Manager
   </div>
   <div class="header-right">
-    <span class="version-tag" id="api-version">—</span>
     <span class="last-updated" id="last-updated">—</span>
     <button class="btn" onclick="loadData()">Refresh</button>
   </div>
 </header>
+
 <main>
   <div class="page-title">Dashboard</div>
   <div class="page-sub">Real-time inventory connected to your AWS RDS database</div>
+
   <div id="alert-area"></div>
   <div id="error-area"></div>
   <div id="success-area"></div>
+
   <div class="metrics">
     <div class="metric m1">
       <div class="metric-label">Total products</div>
@@ -112,6 +124,7 @@
       <div class="metric-sub">need reordering</div>
     </div>
   </div>
+
   <div class="charts-row">
     <div class="card">
       <div class="card-title">Stock levels by product</div>
@@ -124,6 +137,7 @@
       <div style="position:relative;height:240px;"><canvas id="chart2"></canvas></div>
     </div>
   </div>
+
   <div class="card" style="margin-bottom:1.5rem;">
     <div class="card-title">Add new item</div>
     <div class="add-form">
@@ -132,155 +146,164 @@
         <input type="text" id="f-name" placeholder="e.g. Laptop"/>
       </div>
       <div class="form-group">
-        <label class="form-label">SKU</label>
-        <input type="text" id="f-sku" placeholder="e.g. LAP-001"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Category</label>
-        <input type="text" id="f-category" placeholder="e.g. Electronics"/>
-      </div>
-      <div class="form-group">
         <label class="form-label">Quantity</label>
-        <input type="number" id="f-qty" placeholder="10" min="0"/>
+        <input type="number" id="f-qty" placeholder="e.g. 10" min="0"/>
       </div>
       <div class="form-group">
         <label class="form-label">Price ($)</label>
-        <input type="number" id="f-price" placeholder="99.99" min="0" step="0.01"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Reorder point</label>
-        <input type="number" id="f-reorder" placeholder="5" min="0"/>
+        <input type="number" id="f-price" placeholder="e.g. 99.99" min="0" step="0.01"/>
       </div>
       <button class="btn btn-primary" onclick="addItem()">Add item</button>
     </div>
   </div>
+
   <div class="card">
     <div class="card-title">All inventory items</div>
     <div id="table-area"><div class="loading">Loading inventory...</div></div>
   </div>
 </main>
+
 <script>
-const API = 'https://ityntliklc.execute-api.ca-central-1.amazonaws.com/Inventory';
+const API = 'https://3kscjb73u8.execute-api.ca-central-1.amazonaws.com/Inventory';
 const COLORS = ['#2563eb','#0d9488','#d97706','#7c3aed','#e84545','#16a34a','#1d4ed8','#b45309'];
 let chart1, chart2;
-function stockStatus(qty, reorderPoint) {
-  const rp = reorderPoint || 5;
+
+function stockStatus(qty) {
   if (qty <= 2) return ['critical','Critical'];
-  if (qty <= rp) return ['low','Low stock'];
+  if (qty <= 5) return ['low','Low stock'];
   return ['ok','In stock'];
 }
+
 function buildLegend(elId, labels, colors) {
   document.getElementById(elId).innerHTML = labels.map((l,i) =>
-    '<span class="legend-item"><span class="legend-dot" style="background:'+colors[i%colors.length]+'"></span>'+l+'</span>'
+    `<span class="legend-item"><span class="legend-dot" style="background:${colors[i%colors.length]}"></span>${l}</span>`
   ).join('');
 }
+
 function showError(msg) {
-  document.getElementById('error-area').innerHTML = '<div class="error-msg">'+msg+'</div>';
+  document.getElementById('error-area').innerHTML = `<div class="error-msg">${msg}</div>`;
   setTimeout(() => document.getElementById('error-area').innerHTML = '', 5000);
 }
+
 function showSuccess(msg) {
-  document.getElementById('success-area').innerHTML = '<div class="success-msg">'+msg+'</div>';
+  document.getElementById('success-area').innerHTML = `<div class="success-msg">${msg}</div>`;
   setTimeout(() => document.getElementById('success-area').innerHTML = '', 3000);
 }
+
 function loadData() {
   document.getElementById('last-updated').textContent = 'Loading...';
   fetch(API)
     .then(r => r.json())
     .then(data => {
-      const raw = Array.isArray(data) ? data : (data.items || []);
-      const version = data.version || 'v1';
-      document.getElementById('api-version').textContent = version;
+      const items = data.filter(d => !d.name.toLowerCase().includes('test'));
       document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
-      const items = raw.filter(d => !d.name.toLowerCase().includes('test'));
+
       const totalUnits = items.reduce((s,i) => s + i.quantity, 0);
       const totalValue = items.reduce((s,i) => s + (i.quantity * i.price), 0);
-      const lowStock = items.filter(i => i.quantity <= (i.reorder_point || 5));
+      const lowStock = items.filter(i => i.quantity <= 5);
+
       document.getElementById('m-total').textContent = items.length;
       document.getElementById('m-units').textContent = totalUnits;
       document.getElementById('m-value').textContent = '$' + totalValue.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
       document.getElementById('m-alerts').textContent = lowStock.length;
+
       document.getElementById('alert-area').innerHTML = lowStock.length > 0
-        ? '<div class="alert-banner"><div class="alert-dot"></div><span>Low stock warning: <strong>'+lowStock.map(i=>i.name).join(', ')+'</strong> need reordering</span></div>'
+        ? `<div class="alert-banner"><div class="alert-dot"></div><span>Low stock warning: <strong>${lowStock.map(i=>i.name).join(', ')}</strong> need reordering</span></div>`
         : '';
+
       const labels = items.map(i => i.name);
       const qtys = items.map(i => i.quantity);
       const vals = items.map(i => parseFloat((i.quantity * i.price).toFixed(2)));
       const colors = labels.map((_,i) => COLORS[i % COLORS.length]);
+
       buildLegend('legend1', labels, colors);
       buildLegend('legend2', labels, colors);
+
       if (chart1) chart1.destroy();
       if (chart2) chart2.destroy();
+
       chart1 = new Chart(document.getElementById('chart1'), {
         type: 'bar',
         data: { labels, datasets: [{ data: qtys, backgroundColor: colors, borderRadius: 6, borderSkipped: false }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-          scales: { x: { ticks: { font: { size: 11 }, autoSkip: false, maxRotation: 30 }, grid: { display: false }, border: { display: false } },
-            y: { ticks: { font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { display: false } } } }
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { font: { size: 11, family: 'DM Sans' }, autoSkip: false, maxRotation: 30 }, grid: { display: false }, border: { display: false } },
+            y: { ticks: { font: { size: 11, family: 'DM Sans' } }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { display: false } }
+          }
+        }
       });
+
       chart2 = new Chart(document.getElementById('chart2'), {
         type: 'doughnut',
         data: { labels, datasets: [{ data: vals, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '65%' }
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          cutout: '65%'
+        }
       });
-      document.getElementById('table-area').innerHTML =
-        '<table><thead><tr>' +
-        '<th style="width:45px">ID</th>' +
-        '<th style="width:120px">Product</th>' +
-        '<th style="width:80px">SKU</th>' +
-        '<th style="width:100px">Category</th>' +
-        '<th style="width:50px;text-align:right">Qty</th>' +
-        '<th style="width:60px;text-align:right">Reorder</th>' +
-        '<th style="width:90px;text-align:right">Price</th>' +
-        '<th style="width:100px;text-align:right">Value</th>' +
-        '<th style="width:90px;text-align:center">Status</th>' +
-        '</tr></thead><tbody>' +
-        items.map(i => {
-          const [cls, label] = stockStatus(i.quantity, i.reorder_point);
-          return '<tr>' +
-            '<td style="color:var(--text-tertiary);font-family:DM Mono,monospace">#'+i.id+'</td>' +
-            '<td style="font-weight:500">'+i.name+'</td>' +
-            '<td style="font-family:DM Mono,monospace;color:var(--text-secondary)">'+(i.sku||'—')+'</td>' +
-            '<td>'+(i.category?'<span class="cat-badge">'+i.category+'</span>':'—')+'</td>' +
-            '<td style="text-align:right;font-family:DM Mono,monospace">'+i.quantity+'</td>' +
-            '<td style="text-align:right;font-family:DM Mono,monospace">'+(i.reorder_point||5)+'</td>' +
-            '<td style="text-align:right;font-family:DM Mono,monospace">$'+i.price.toFixed(2)+'</td>' +
-            '<td style="text-align:right;font-family:DM Mono,monospace">$'+(i.quantity*i.price).toLocaleString('en-US',{minimumFractionDigits:2})+'</td>' +
-            '<td style="text-align:center"><span class="badge badge-'+cls+'">'+label+'</span></td>' +
-            '</tr>';
-        }).join('') +
-        '</tbody></table>';
+
+      document.getElementById('table-area').innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th style="width:50px">ID</th>
+              <th>Product</th>
+              <th style="width:90px;text-align:right">Qty</th>
+              <th style="width:100px;text-align:right">Price</th>
+              <th style="width:120px;text-align:right">Value</th>
+              <th style="width:100px;text-align:center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(i => {
+              const [cls, label] = stockStatus(i.quantity);
+              return `<tr>
+                <td style="color:var(--text-tertiary);font-family:'DM Mono',monospace;font-size:12px">#${i.id}</td>
+                <td style="font-weight:500">${i.name}</td>
+                <td style="text-align:right;font-family:'DM Mono',monospace">${i.quantity}</td>
+                <td style="text-align:right;font-family:'DM Mono',monospace">$${i.price.toFixed(2)}</td>
+                <td style="text-align:right;font-family:'DM Mono',monospace">$${(i.quantity*i.price).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
+                <td style="text-align:center"><span class="badge badge-${cls}">${label}</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`;
     })
     .catch(err => {
       document.getElementById('last-updated').textContent = 'Failed to load';
-      showError('Could not connect to API: ' + err.message);
+      showError('Could not connect to API: ' + err.message + '. Check CORS settings in API Gateway.');
     });
 }
+
 function addItem() {
   const name = document.getElementById('f-name').value.trim();
-  const sku = document.getElementById('f-sku').value.trim();
-  const category = document.getElementById('f-category').value.trim();
   const qty = parseInt(document.getElementById('f-qty').value);
   const price = parseFloat(document.getElementById('f-price').value);
-  const reorder = parseInt(document.getElementById('f-reorder').value) || 5;
-  if (!name || isNaN(qty) || isNaN(price)) { showError('Please fill in name, quantity and price.'); return; }
+
+  if (!name || isNaN(qty) || isNaN(price)) {
+    showError('Please fill in all fields correctly.');
+    return;
+  }
+
   fetch(API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, sku, category, quantity: qty, price, reorder_point: reorder })
+    body: JSON.stringify({ name, quantity: qty, price })
   })
   .then(r => r.json())
   .then(() => {
     document.getElementById('f-name').value = '';
-    document.getElementById('f-sku').value = '';
-    document.getElementById('f-category').value = '';
     document.getElementById('f-qty').value = '';
     document.getElementById('f-price').value = '';
-    document.getElementById('f-reorder').value = '';
     showSuccess('Item added successfully!');
     loadData();
   })
   .catch(err => showError('Failed to add item: ' + err.message));
 }
+
 loadData();
 </script>
 </body>
