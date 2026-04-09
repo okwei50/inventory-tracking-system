@@ -1,4 +1,4 @@
-# Inventory Tracking System v3
+# Inventory Tracking System v4
 import json
 import psycopg2
 import os
@@ -8,10 +8,13 @@ def lambda_handler(event, context):
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Headers": "content-type,x-amz-date,authorization,x-api-key",
-        "Access-Control-Allow-Methods": "GET,POST,OPTIONS"
+        "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
     }
 
     method = event.get('httpMethod') or event.get('requestContext', {}).get('http', {}).get('method', 'GET')
+    path = event.get('path') or event.get('rawPath', '/Inventory')
+    path_parts = path.strip('/').split('/')
+    item_id = path_parts[1] if len(path_parts) > 1 else None
 
     if method == 'OPTIONS':
         return {
@@ -50,17 +53,6 @@ def lambda_handler(event, context):
         """)
 
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS suppliers (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                email VARCHAR(255),
-                phone VARCHAR(50),
-                lead_time_days INTEGER DEFAULT 7,
-                created_at TIMESTAMP DEFAULT NOW()
-            )
-        """)
-
-        cur.execute("""
             CREATE TABLE IF NOT EXISTS inventory_transactions (
                 id SERIAL PRIMARY KEY,
                 inventory_id INTEGER REFERENCES inventory(id),
@@ -68,6 +60,17 @@ def lambda_handler(event, context):
                 quantity INTEGER,
                 timestamp TIMESTAMP DEFAULT NOW(),
                 notes TEXT
+            )
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS suppliers (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255),
+                phone VARCHAR(50),
+                lead_time_days INTEGER DEFAULT 7,
+                created_at TIMESTAMP DEFAULT NOW()
             )
         """)
 
@@ -132,7 +135,7 @@ def lambda_handler(event, context):
                 "statusCode": 200,
                 "headers": headers,
                 "body": json.dumps({
-                    "version": "v3",
+                    "version": "v4",
                     "items": items
                 })
             }
@@ -142,7 +145,8 @@ def lambda_handler(event, context):
             cur.execute(
                 """INSERT INTO inventory
                    (name, quantity, price, sku, reorder_point, lead_time_days, category)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)
+                   RETURNING id""",
                 (
                     body['name'],
                     body['quantity'],
@@ -153,11 +157,12 @@ def lambda_handler(event, context):
                     body.get('category', None)
                 )
             )
+            new_id = cur.fetchone()[0]
             cur.execute("""
                 INSERT INTO inventory_transactions
                 (inventory_id, transaction_type, quantity, notes)
-                VALUES (currval('inventory_id_seq'), 'restock', %s, 'Initial stock')
-            """, (body['quantity'],))
+                VALUES (%s, 'restock', %s, 'Initial stock')
+            """, (new_id, body['quantity']))
             conn.commit()
             cur.close()
             conn.close()
@@ -165,6 +170,82 @@ def lambda_handler(event, context):
                 "statusCode": 200,
                 "headers": headers,
                 "body": json.dumps("Item added successfully")
+            }
+
+        elif method == 'PUT':
+            if not item_id:
+                return {
+                    "statusCode": 400,
+                    "headers": headers,
+                    "body": json.dumps({"error": "Item ID required"})
+                }
+            body = json.loads(event['body'])
+            cur.execute("""
+                SELECT quantity FROM inventory WHERE id = %s
+            """, (item_id,))
+            old_row = cur.fetchone()
+            if not old_row:
+                return {
+                    "statusCode": 404,
+                    "headers": headers,
+                    "body": json.dumps({"error": "Item not found"})
+                }
+            old_quantity = old_row[0]
+            new_quantity = body.get('quantity', old_quantity)
+            cur.execute("""
+                UPDATE inventory
+                SET name = %s,
+                    quantity = %s,
+                    price = %s,
+                    sku = %s,
+                    reorder_point = %s,
+                    lead_time_days = %s,
+                    category = %s,
+                    last_updated = NOW()
+                WHERE id = %s
+            """, (
+                body.get('name'),
+                new_quantity,
+                body.get('price'),
+                body.get('sku'),
+                body.get('reorder_point', 5),
+                body.get('lead_time_days', 7),
+                body.get('category'),
+                item_id
+            ))
+            quantity_diff = new_quantity - old_quantity
+            if quantity_diff != 0:
+                transaction_type = 'restock' if quantity_diff > 0 else 'sale'
+                cur.execute("""
+                    INSERT INTO inventory_transactions
+                    (inventory_id, transaction_type, quantity, notes)
+                    VALUES (%s, %s, %s, %s)
+                """, (item_id, transaction_type, abs(quantity_diff), 'Manual update'))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {
+                "statusCode": 200,
+                "headers": headers,
+                "body": json.dumps("Item updated successfully")
+            }
+
+        elif method == 'DELETE':
+            if not item_id:
+                return {
+                    "statusCode": 400,
+                    "headers": headers,
+                    "body": json.dumps({"error": "Item ID required"})
+                }
+            cur.execute("DELETE FROM inventory_transactions WHERE inventory_id = %s", (item_id,))
+            cur.execute("DELETE FROM inventory WHERE id = %s", (item_id,))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {
+                "statusCode": 200,
+                "headers": headers,
+                "body": json.dumps("Item deleted successfully")
             }
 
         else:
