@@ -1,0 +1,59 @@
+{
+  "pipeline": {
+    "name": "inventory-pipeline",
+    "roleArn": "arn:aws:iam::899259776056:role/CodePipelineInventoryRole",
+    "artifactStore": {
+      "type": "S3",
+      "location": "inventory-data-buckett"
+    },
+    "stages": [
+      {
+        "name": "Source",
+        "actions": [
+          {
+            "name": "GitHub-Source",
+            "actionTypeId": {
+              "category": "Source",
+              "owner": "AWS",
+              "provider": "CodeStarSourceConnection",
+              "version": "1"
+            },
+            "configuration": {
+              "ConnectionArn": "arn:aws:codeconnections:ca-central-1:899259776056:connection/557b51cf-96e8-45a1-a3b9-af43d18d425c",
+              "FullRepositoryId": "okwei50/inventory-tracking-system",
+              "BranchName": "main",
+              "OutputArtifactFormat": "CODE_ZIP"
+            },
+            "outputArtifacts": [
+              {
+                "name": "SourceOutput"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Build",
+        "actions": [
+          {
+            "name": "CodeBuild",
+            "actionTypeId": {
+              "category": "Build",
+              "owner": "AWS",
+              "provider": "CodeBuild",
+              "version": "1"
+            },
+            "configuration": {
+              "ProjectName": "inventory-build"
+            },
+            "inputArtifacts": [
+              {
+                "name": "SourceOutput"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
