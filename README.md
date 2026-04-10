@@ -1,12 +1,13 @@
-# 📦 AWS Inventory Tracking System
+# 📦 AWS Supply Chain Control Tower
 
-A production-grade cloud inventory management system built entirely on AWS from scratch. This is **Project 1** of a planned **AI-powered Supply Chain Control Tower** that will integrate demand forecasting, safety stock optimization, and automated purchase order generation.
+A production-grade, AI-powered supply chain management platform built entirely on AWS from scratch. This project is being built in phases, with each project independently deployable and designed to integrate into a unified **Supply Chain Control Tower**.
 
 [![AWS](https://img.shields.io/badge/AWS-Cloud-orange?logo=amazon-aws)](https://aws.amazon.com)
 [![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)](https://python.org)
 [![Docker](https://img.shields.io/badge/Docker-Containerized-blue?logo=docker)](https://docker.com)
 [![Terraform](https://img.shields.io/badge/Terraform-IaC-purple?logo=terraform)](https://terraform.io)
 [![CI/CD](https://img.shields.io/badge/CI/CD-CodePipeline-green?logo=amazon-aws)](https://aws.amazon.com/codepipeline)
+[![Security](https://img.shields.io/badge/Security-API%20Key%20Auth-red?logo=amazon-aws)](https://aws.amazon.com)
 
 ---
 
@@ -15,7 +16,22 @@ A production-grade cloud inventory management system built entirely on AWS from 
 | Resource | URL |
 |----------|-----|
 | **Dashboard** | https://d3knwbrcu1kxhj.cloudfront.net |
-| **API Endpoint** | https://ityntliklc.execute-api.ca-central-1.amazonaws.com/Inventory |
+| **Inventory API** | https://ityntliklc.execute-api.ca-central-1.amazonaws.com/Inventory |
+| **Forecast API** | https://ityntliklc.execute-api.ca-central-1.amazonaws.com/Forecasts |
+
+> **Note:** API requires `x-api-key` header for authentication
+
+---
+
+## 🗺️ Project Roadmap
+
+| Phase | Project | Status | Description |
+|-------|---------|--------|-------------|
+| 1 | Inventory Tracking System | ✅ Complete | Real-time inventory management with full CRUD |
+| 2 | Demand Forecasting System | ✅ Complete | AI-powered demand predictions + stockout alerts |
+| 3 | Safety Stock Optimizer | 🔵 Next | Optimal buffer stock calculation |
+| 4 | PO Auto Generator | 🟡 Planned | Automated purchase order generation |
+| Final | AI Control Tower | 🔮 Vision | Unified AI dashboard with AWS Bedrock |
 
 ---
 
@@ -26,62 +42,88 @@ Internet
     ↓
 CloudFront (HTTPS + CDN + WAF)
     ↓
-S3 (Static Dashboard Hosting)
+S3 (Static Dashboard — Inventory + Forecasting tabs)
     ↓
-API Gateway (HTTP API — GET/POST /Inventory)
+API Gateway (HTTP API — authenticated with Lambda Authorizer)
     ↓
-Lambda Function (Python 3.11 — Docker Container)
+┌──────────────────────────────────────────┐
+│  Inventory Lambda  │  Forecast Lambda     │
+│  (CRUD operations) │  (demand predictions)│
+└──────────────────────────────────────────┘
     ↓
 RDS PostgreSQL (Private Subnet)
+├── inventory table
+├── inventory_transactions table
+├── forecasts table
+├── suppliers table
+├── safety_stock table
+└── purchase_orders table
 
-All inside a custom VPC with:
-✅ Public & private subnets across 2 availability zones
-✅ NAT Gateway for outbound access from private subnets
-✅ Security group chaining (Public → Lambda → RDS)
-✅ No public database exposure
+Security:
+✅ Lambda Authorizer — API key authentication
+✅ WAF — Web Application Firewall
+✅ Private subnets — RDS never publicly accessible
+✅ Security group chaining
+✅ HTTPS enforced everywhere
+✅ Secrets Manager for credentials
 ```
 
 ### AWS Services Used
 
 | Service | Purpose |
 |---------|---------|
-| **Lambda** | Backend API (Python 3.11, Docker container) |
+| **Lambda** | Inventory API + Forecast engine (Python 3.11, Docker) |
 | **RDS PostgreSQL** | Primary database (private subnet) |
-| **API Gateway** | REST API endpoint with CORS |
-| **S3** | Dashboard hosting + Terraform state storage |
-| **CloudFront** | CDN + HTTPS + WAF protection |
-| **ECR** | Docker container registry |
+| **API Gateway** | REST API with Lambda authorizer |
+| **S3** | Dashboard hosting + Terraform state |
+| **CloudFront** | CDN + HTTPS + WAF |
+| **ECR** | Docker container registry (3 images) |
 | **CodePipeline** | CI/CD orchestration |
 | **CodeBuild** | Docker build + automated deployment |
-| **VPC** | Network isolation and security |
+| **VPC** | Network isolation (public + private subnets, 2 AZs) |
 | **NAT Gateway** | Outbound internet for private resources |
 | **IAM** | Roles and permissions |
+| **Secrets Manager** | Secure credential storage |
 
 ---
 
-## 🚀 Features
+## ✨ Features
 
-- **Real-time inventory dashboard** with charts and metrics
-- **REST API** supporting GET and POST operations
-- **Low stock alerts** with configurable reorder points
-- **Full inventory fields** — SKU, category, lead time, reorder point
-- **HTTPS everywhere** via CloudFront
-- **WAF protection** against common web vulnerabilities
-- **Infrastructure as Code** — entire stack deployable with one command
-- **Containerized** Lambda function via Docker + ECR
-- **Automated CI/CD** — push to GitHub → auto deploy to AWS
+### Project 1 — Inventory Tracking
+- **Full CRUD operations** — Add, view, edit, delete inventory items
+- **Rich item fields** — SKU, category, reorder point, lead time
+- **Real-time dashboard** — Stock charts, value distribution, metrics
+- **Low stock alerts** — Automatic warnings based on reorder points
+- **Transaction tracking** — Every stock movement recorded automatically
+
+### Project 2 — Demand Forecasting
+- **Stockout predictions** — Days until each item runs out
+- **Demand forecasting** — 30, 60, 90 day projections
+- **Confidence scoring** — Based on transaction history volume
+- **Reorder recommendations** — Automatic reorder alerts
+- **Trend detection** — Increasing, decreasing, or stable demand
+- **One-click forecast** — Run new forecasts anytime from dashboard
 
 ---
 
-## 📊 Dashboard Preview
+## 📊 Dashboard
 
-The dashboard includes:
-- 📈 **Stock levels bar chart** per product
-- 🍩 **Value distribution doughnut chart**
-- 🔢 **Metric cards** — total products, units, value, alerts
-- ⚠️ **Low stock warning banner** with pulsing indicator
-- 📋 **Full inventory table** with status badges
-- ➕ **Add new item form** with all fields
+The live dashboard features two tabs:
+
+**Inventory Tab:**
+- Stock levels bar chart per product
+- Value distribution doughnut chart
+- Metric cards (total products, units, value, alerts)
+- Full inventory table with Edit and Delete buttons
+- Add new item form with all fields
+
+**Demand Forecasting Tab:**
+- Stockout prediction cards (Critical/Warning/OK)
+- Days until stockout per item
+- Daily demand estimates
+- 30 and 60 day demand forecasts
+- Confidence percentage per forecast
+- Run Forecast button to trigger new analysis
 
 ---
 
@@ -89,22 +131,26 @@ The dashboard includes:
 
 ```
 inventory-tracking-system/
-├── lambda_function.py          # Lambda handler (Python 3.11)
-├── Dockerfile                  # Container definition
+├── lambda_function.py          # Inventory Lambda (CRUD v4)
+├── forecast_function.py        # Forecast Lambda (demand predictions)
+├── authorizer_function.py      # API Key authorizer Lambda
+├── Dockerfile                  # Inventory Lambda container
+├── Dockerfile.forecast         # Forecast Lambda container
+├── Dockerfile.authorizer       # Authorizer Lambda container
 ├── buildspec.yml               # CodeBuild CI/CD config
-├── index.html                  # Dashboard frontend
+├── index.html                  # Dashboard (Inventory + Forecasting tabs)
 ├── inventory-terraform/        # Terraform IaC
-│   ├── main.tf                 # Provider + S3 backend
-│   ├── variables.tf            # Input variables
-│   ├── outputs.tf              # Output values
-│   ├── modules.tf              # Module declarations
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── modules.tf
 │   └── modules/
-│       ├── vpc/                # VPC, subnets, NAT, security groups
-│       ├── rds/                # RDS instance + subnet group
-│       ├── lambda/             # Lambda function + IAM roles
-│       ├── apigateway/         # HTTP API + routes + CORS
-│       ├── s3/                 # S3 bucket + website config
-│       └── cloudfront/         # CloudFront distribution
+│       ├── vpc/
+│       ├── rds/
+│       ├── lambda/
+│       ├── apigateway/
+│       ├── s3/
+│       └── cloudfront/
 └── README.md
 ```
 
@@ -115,22 +161,30 @@ inventory-tracking-system/
 **Backend**
 - Python 3.11
 - psycopg2-binary (PostgreSQL driver)
-- AWS Lambda (serverless)
-- AWS API Gateway (HTTP API)
+- AWS Lambda (3 functions — inventory, forecast, authorizer)
+- AWS API Gateway (HTTP API with Lambda authorizer)
 
 **Database**
 - PostgreSQL 16.6 on AWS RDS
 - Private subnet — not publicly accessible
+- 6 tables supporting all 4 projects
 
 **Frontend**
 - Vanilla HTML/CSS/JavaScript
 - Chart.js for visualizations
 - DM Sans + DM Mono fonts
+- Two-tab layout (Inventory + Forecasting)
+
+**Security**
+- Lambda authorizer with API key
+- WAF protection
+- HTTPS enforced via CloudFront
+- RDS in private subnet
 
 **Infrastructure**
 - Terraform 1.5.7
 - Docker (linux/amd64)
-- AWS ECR
+- AWS ECR (3 repositories)
 
 **CI/CD**
 - GitHub (source control)
@@ -143,116 +197,70 @@ inventory-tracking-system/
 
 **Base URL:** `https://ityntliklc.execute-api.ca-central-1.amazonaws.com`
 
-### GET /Inventory
-Returns all inventory items.
+**Required Header:** `x-api-key: <your-api-key>`
 
-**Response:**
-```json
-{
-  "version": "v3",
-  "items": [
-    {
-      "id": 1,
-      "name": "Laptop",
-      "quantity": 3,
-      "price": 999.99,
-      "sku": "LAP-001",
-      "reorder_point": 5,
-      "lead_time_days": 7,
-      "category": "Electronics"
-    }
-  ]
-}
-```
+### Inventory Endpoints
 
-### POST /Inventory
-Add a new inventory item.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/Inventory` | Get all inventory items |
+| POST | `/Inventory` | Add new item |
+| PUT | `/Inventory/{id}` | Update existing item |
+| DELETE | `/Inventory/{id}` | Delete item |
 
-**Request Body:**
-```json
-{
-  "name": "Laptop",
-  "quantity": 10,
-  "price": 999.99,
-  "sku": "LAP-001",
-  "category": "Electronics",
-  "reorder_point": 5,
-  "lead_time_days": 7
-}
-```
+### Forecast Endpoints
 
-**Response:**
-```json
-"Item added successfully"
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/Forecasts` | Get all forecasts |
+| POST | `/Forecasts` | Run new forecast analysis |
 
 ---
 
 ## 🗄️ Database Schema
 
 ```sql
--- Core inventory table
 CREATE TABLE inventory (
-    id              SERIAL PRIMARY KEY,
-    name            VARCHAR(255) NOT NULL,
-    quantity        INTEGER NOT NULL,
-    price           DECIMAL(10,2) NOT NULL,
-    sku             VARCHAR(100),
-    reorder_point   INTEGER DEFAULT 5,
-    lead_time_days  INTEGER DEFAULT 7,
-    supplier_id     INTEGER,
-    last_updated    TIMESTAMP DEFAULT NOW(),
-    category        VARCHAR(100)
+    id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL,
+    quantity INTEGER NOT NULL, price DECIMAL(10,2) NOT NULL,
+    sku VARCHAR(100), reorder_point INTEGER DEFAULT 5,
+    lead_time_days INTEGER DEFAULT 7, supplier_id INTEGER,
+    last_updated TIMESTAMP DEFAULT NOW(), category VARCHAR(100)
 );
 
--- Suppliers (for PO auto generator)
-CREATE TABLE suppliers (
-    id              SERIAL PRIMARY KEY,
-    name            VARCHAR(255) NOT NULL,
-    email           VARCHAR(255),
-    phone           VARCHAR(50),
-    lead_time_days  INTEGER DEFAULT 7,
-    created_at      TIMESTAMP DEFAULT NOW()
-);
-
--- Transaction history (feeds demand forecasting ML)
 CREATE TABLE inventory_transactions (
-    id              SERIAL PRIMARY KEY,
-    inventory_id    INTEGER REFERENCES inventory(id),
-    transaction_type VARCHAR(50),
-    quantity        INTEGER,
-    timestamp       TIMESTAMP DEFAULT NOW(),
-    notes           TEXT
+    id SERIAL PRIMARY KEY,
+    inventory_id INTEGER REFERENCES inventory(id),
+    transaction_type VARCHAR(50), quantity INTEGER,
+    timestamp TIMESTAMP DEFAULT NOW(), notes TEXT
 );
 
--- Demand forecasts (Project 2)
 CREATE TABLE forecasts (
-    id              SERIAL PRIMARY KEY,
-    inventory_id    INTEGER REFERENCES inventory(id),
-    forecast_date   DATE,
-    predicted_demand INTEGER,
-    confidence_score DECIMAL(5,2),
-    created_at      TIMESTAMP DEFAULT NOW()
+    id SERIAL PRIMARY KEY,
+    inventory_id INTEGER REFERENCES inventory(id),
+    forecast_date DATE, predicted_demand DECIMAL(10,2),
+    confidence_score DECIMAL(5,2), created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Safety stock (Project 3)
+CREATE TABLE suppliers (
+    id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL,
+    email VARCHAR(255), phone VARCHAR(50),
+    lead_time_days INTEGER DEFAULT 7, created_at TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE safety_stock (
-    id              SERIAL PRIMARY KEY,
-    inventory_id    INTEGER REFERENCES inventory(id),
-    optimal_quantity INTEGER,
-    calculated_at   TIMESTAMP DEFAULT NOW()
+    id SERIAL PRIMARY KEY,
+    inventory_id INTEGER REFERENCES inventory(id),
+    optimal_quantity INTEGER, calculated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Purchase orders (Project 4)
 CREATE TABLE purchase_orders (
-    id              SERIAL PRIMARY KEY,
-    inventory_id    INTEGER REFERENCES inventory(id),
-    supplier_id     INTEGER REFERENCES suppliers(id),
-    quantity        INTEGER,
-    status          VARCHAR(50) DEFAULT 'pending',
-    created_at      TIMESTAMP DEFAULT NOW(),
-    expected_delivery DATE,
-    notes           TEXT
+    id SERIAL PRIMARY KEY,
+    inventory_id INTEGER REFERENCES inventory(id),
+    supplier_id INTEGER REFERENCES suppliers(id),
+    quantity INTEGER, status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT NOW(),
+    expected_delivery DATE, notes TEXT
 );
 ```
 
@@ -260,49 +268,26 @@ CREATE TABLE purchase_orders (
 
 ## ⚙️ Infrastructure Deployment
 
-### Prerequisites
-- AWS CLI configured (`aws configure`)
-- Terraform 1.5.7+
-- Docker Desktop
-
-### Deploy with Terraform
-
 ```bash
-# Clone the repository
 git clone https://github.com/okwei50/inventory-tracking-system.git
 cd inventory-tracking-system/inventory-terraform
-
-# Initialize Terraform
 terraform init
-
-# Preview changes
 terraform plan
-
-# Deploy everything
 terraform apply
 ```
-
-### CI/CD Pipeline
-
-Every `git push` to `main` automatically:
-1. Triggers AWS CodePipeline
-2. CodeBuild pulls latest code from GitHub
-3. Builds Docker image (`linux/amd64`)
-4. Pushes image to ECR
-5. Updates Lambda function
-6. Uploads dashboard to S3
-7. Invalidates CloudFront cache
 
 ---
 
 ## 🔒 Security
 
+- ✅ Lambda authorizer — every API request requires valid key
 - ✅ RDS in private subnet — never publicly accessible
 - ✅ Lambda in private subnet with NAT Gateway
 - ✅ Security groups chained — least privilege access
-- ✅ CloudFront WAF — protection against common vulnerabilities
+- ✅ CloudFront WAF — common vulnerability protection
 - ✅ HTTPS enforced — HTTP redirects to HTTPS
-- ✅ No credentials in code — environment variables only
+- ✅ Secrets Manager — no credentials in code
+- ✅ Password rotation — RDS password changed regularly
 
 ---
 
@@ -315,42 +300,37 @@ Every `git push` to `main` automatically:
 | RDS requires 2 AZs | Created subnets in ca-central-1a and ca-central-1b |
 | Docker platform mismatch | `--platform linux/amd64 --provenance=false` |
 | Lambda Zip → Image conversion | Created new function with `--package-type Image` |
-| CI/CD async Lambda update | Added `aws lambda wait function-updated` to buildspec |
+| CI/CD async Lambda update | Added `aws lambda wait function-updated` |
 | Wrong CloudFront distribution | Used `aws cloudfront list-distributions` to verify |
+| Open API security risk | Lambda authorizer with API key authentication |
+| Exposed DB credentials | Password rotation + Secrets Manager |
 
 ---
 
-## 🗺️ Roadmap — Supply Chain Control Tower
+## 🔮 What's Next
 
-This is **Project 1** of 4. The goal is to integrate all projects into one AI-powered platform.
+### Project 3 — Safety Stock Optimizer
+- Read from `forecasts` and `inventory` tables
+- Calculate optimal buffer stock using demand variability + lead time
+- Update `safety_stock` table automatically
+- EventBridge trigger when stock drops below reorder point
 
-```
-Project 1: Inventory Tracking    ✅ Complete
-Project 2: Demand Forecasting    🔵 Next — AWS SageMaker + time series ML
-Project 3: Safety Stock Optimizer 🟡 Planned — optimal buffer stock calculation
-Project 4: PO Auto Generator     🟡 Planned — AWS Step Functions + SES emails
-AI Control Tower: Integration    🔮 Final — AWS Bedrock (Claude AI) unified dashboard
-```
+### Project 4 — Purchase Order Auto Generator
+- AWS Step Functions orchestration
+- Auto-generate purchase orders
+- Send PO via AWS SES email to suppliers
 
-### How Projects Connect
-
-```
-inventory_transactions → SageMaker ML → forecasts table
-forecasts + inventory  → Safety stock optimizer → safety_stock table
-safety_stock + suppliers → PO generator → purchase_orders table + SES email
-All tables → AI Control Tower → unified dashboard + recommendations
-```
-
----
-
-## 📝 License
-
-This project is for educational and portfolio purposes.
+### Final — AI Supply Chain Control Tower
+- **AWS Bedrock (Claude AI)** — conversational interface
+- **Unified dashboard** — all 4 systems in one view
+- **EventBridge** — events flow between all projects
+- **AI recommendations** — predictive reordering and alerts
 
 ---
 
 ## 👤 Author
 
-Built by **Kweku** — cloud infrastructure enthusiast building a production-grade supply chain management platform on AWS.
+Built by **Kweku** — Cloud Infrastructure Developer specializing in building AI-powered supply chain systems on AWS.
 
 🔗 GitHub: [@okwei50](https://github.com/okwei50)
+🌐 Live: [https://d3knwbrcu1kxhj.cloudfront.net](https://d3knwbrcu1kxhj.cloudfront.net)
