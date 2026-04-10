@@ -8,7 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    :root{--bg:#f5f4f0;--surface:#fff;--border:rgba(0,0,0,0.08);--text-primary:#1a1a18;--text-secondary:#6b6b67;--text-tertiary:#9b9b97;--blue:#2563eb;--blue-light:#eff6ff;--green:#16a34a;--green-light:#f0fdf4;--amber:#d97706;--amber-light:#fffbeb;--red:#dc2626;--red-light:#fef2f2;--radius:12px;--radius-sm:8px;}
+    :root{--bg:#f5f4f0;--surface:#fff;--border:rgba(0,0,0,0.08);--text-primary:#1a1a18;--text-secondary:#6b6b67;--text-tertiary:#9b9b97;--blue:#2563eb;--blue-light:#eff6ff;--green:#16a34a;--green-light:#f0fdf4;--amber:#d97706;--amber-light:#fffbeb;--red:#dc2626;--red-light:#fef2f2;--purple:#7c3aed;--purple-light:#f5f3ff;--radius:12px;--radius-sm:8px;}
     body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-primary);min-height:100vh;}
     header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;}
     .logo{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;}
@@ -24,11 +24,20 @@
     .btn-danger:hover{background:var(--red);color:#fff;}
     .btn-edit{background:var(--blue-light);color:var(--blue);border-color:rgba(37,99,235,0.2);font-size:11px;padding:4px 10px;}
     .btn-edit:hover{background:var(--blue);color:#fff;}
+    .btn-forecast{background:var(--purple-light);color:var(--purple);border-color:rgba(124,58,237,0.2);font-size:13px;padding:7px 16px;}
+    .btn-forecast:hover{background:var(--purple);color:#fff;}
+    .tabs{display:flex;gap:4px;padding:0 2rem;background:var(--surface);border-bottom:1px solid var(--border);}
+    .tab{font-size:13px;font-weight:500;padding:12px 16px;border:none;background:none;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;}
+    .tab.active{color:var(--text-primary);border-bottom-color:var(--text-primary);}
+    .tab-content{display:none;}
+    .tab-content.active{display:block;}
     main{padding:2rem;max-width:1200px;margin:0 auto;}
     .page-title{font-size:22px;font-weight:600;margin-bottom:4px;}
     .page-sub{font-size:13px;color:var(--text-secondary);margin-bottom:1.5rem;}
     .alert-banner{display:flex;align-items:center;gap:10px;background:var(--amber-light);border:1px solid rgba(217,119,6,0.2);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:1.5rem;font-size:13px;color:#92400e;}
     .alert-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0;animation:pulse 2s infinite;}
+    .critical-banner{display:flex;align-items:center;gap:10px;background:var(--red-light);border:1px solid rgba(220,38,38,0.2);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:1rem;font-size:13px;color:#991b1b;}
+    .critical-dot{width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0;animation:pulse 2s infinite;}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
     .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:1.5rem;}
     .metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;transition:transform 0.15s;}
@@ -40,9 +49,11 @@
     .m2{border-top:3px solid var(--blue);}
     .m3{border-top:3px solid var(--green);}
     .m4{border-top:3px solid var(--amber);}
+    .m5{border-top:3px solid var(--purple);}
     .charts-row{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-bottom:1.5rem;}
     .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;}
     .card-title{font-size:14px;font-weight:600;margin-bottom:1rem;}
+    .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
     .legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
     .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary);}
     .legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
@@ -55,6 +66,8 @@
     .badge-ok{background:var(--green-light);color:var(--green);}
     .badge-low{background:var(--amber-light);color:var(--amber);}
     .badge-critical{background:var(--red-light);color:var(--red);}
+    .badge-warning{background:var(--amber-light);color:var(--amber);}
+    .badge-purple{background:var(--purple-light);color:var(--purple);}
     .cat-badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;background:#eff6ff;color:#2563eb;}
     .add-form{display:grid;grid-template-columns:repeat(3,1fr) repeat(3,1fr) auto;gap:8px;align-items:end;margin-bottom:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;}
     .form-group{display:flex;flex-direction:column;gap:4px;}
@@ -71,6 +84,17 @@
     .modal-title{font-size:16px;font-weight:600;margin-bottom:1.25rem;}
     .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem;}
     .modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+    .forecast-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:1.5rem;}
+    .forecast-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;}
+    .forecast-card.critical{border-color:rgba(220,38,38,0.3);background:var(--red-light);}
+    .forecast-card.warning{border-color:rgba(217,119,6,0.3);background:var(--amber-light);}
+    .forecast-name{font-size:13px;font-weight:600;margin-bottom:8px;}
+    .forecast-days{font-size:28px;font-weight:600;font-family:'DM Mono',monospace;line-height:1;margin-bottom:4px;}
+    .forecast-sub{font-size:11px;color:var(--text-secondary);margin-bottom:8px;}
+    .forecast-demand{font-size:12px;color:var(--text-secondary);}
+    .confidence-bar{height:4px;background:var(--border);border-radius:2px;margin-top:8px;}
+    .confidence-fill{height:100%;border-radius:2px;background:var(--green);}
+    @media(max-width:768px){main{padding:1rem}.metrics{grid-template-columns:repeat(2,1fr)}.charts-row{grid-template-columns:1fr}.add-form{grid-template-columns:1fr 1fr}.forecast-grid{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
 <body>
@@ -85,6 +109,12 @@
     <button class="btn" onclick="loadData()">Refresh</button>
   </div>
 </header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('inventory',this)">Inventory</button>
+  <button class="tab" onclick="switchTab('forecasting',this)">Demand Forecasting</button>
+</div>
+
 <div class="modal-overlay" id="editModal">
   <div class="modal">
     <div class="modal-title">Edit item</div>
@@ -103,52 +133,93 @@
     </div>
   </div>
 </div>
+
 <main>
-  <div class="page-title">Dashboard</div>
-  <div class="page-sub">Real-time inventory connected to your AWS RDS database</div>
-  <div id="alert-area"></div>
-  <div id="error-area"></div>
-  <div id="success-area"></div>
-  <div class="metrics">
-    <div class="metric m1"><div class="metric-label">Total products</div><div class="metric-value" id="m-total">-</div><div class="metric-sub">unique items</div></div>
-    <div class="metric m2"><div class="metric-label">Total units</div><div class="metric-value" id="m-units">-</div><div class="metric-sub">in stock</div></div>
-    <div class="metric m3"><div class="metric-label">Total value</div><div class="metric-value" id="m-value">-</div><div class="metric-sub">inventory worth</div></div>
-    <div class="metric m4"><div class="metric-label">Low stock alerts</div><div class="metric-value" id="m-alerts">-</div><div class="metric-sub">need reordering</div></div>
+  <div id="tab-inventory" class="tab-content active">
+    <div class="page-title">Dashboard</div>
+    <div class="page-sub">Real-time inventory connected to your AWS RDS database</div>
+    <div id="alert-area"></div>
+    <div id="error-area"></div>
+    <div id="success-area"></div>
+    <div class="metrics">
+      <div class="metric m1"><div class="metric-label">Total products</div><div class="metric-value" id="m-total">-</div><div class="metric-sub">unique items</div></div>
+      <div class="metric m2"><div class="metric-label">Total units</div><div class="metric-value" id="m-units">-</div><div class="metric-sub">in stock</div></div>
+      <div class="metric m3"><div class="metric-label">Total value</div><div class="metric-value" id="m-value">-</div><div class="metric-sub">inventory worth</div></div>
+      <div class="metric m4"><div class="metric-label">Low stock alerts</div><div class="metric-value" id="m-alerts">-</div><div class="metric-sub">need reordering</div></div>
+    </div>
+    <div class="charts-row">
+      <div class="card"><div class="card-title">Stock levels by product</div><div id="legend1" class="legend"></div><div style="position:relative;height:240px;"><canvas id="chart1"></canvas></div></div>
+      <div class="card"><div class="card-title">Value distribution</div><div id="legend2" class="legend"></div><div style="position:relative;height:240px;"><canvas id="chart2"></canvas></div></div>
+    </div>
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-title">Add new item</div>
+      <div class="add-form">
+        <div class="form-group"><label class="form-label">Product name</label><input type="text" id="f-name" placeholder="e.g. Laptop"/></div>
+        <div class="form-group"><label class="form-label">SKU</label><input type="text" id="f-sku" placeholder="e.g. LAP-001"/></div>
+        <div class="form-group"><label class="form-label">Category</label><input type="text" id="f-category" placeholder="e.g. Electronics"/></div>
+        <div class="form-group"><label class="form-label">Quantity</label><input type="number" id="f-qty" placeholder="10" min="0"/></div>
+        <div class="form-group"><label class="form-label">Price</label><input type="number" id="f-price" placeholder="99.99" min="0" step="0.01"/></div>
+        <div class="form-group"><label class="form-label">Reorder point</label><input type="number" id="f-reorder" placeholder="5" min="0"/></div>
+        <button class="btn btn-primary" onclick="addItem()">Add item</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">All inventory items</div><div id="table-area"><div class="loading">Loading...</div></div></div>
   </div>
-  <div class="charts-row">
-    <div class="card"><div class="card-title">Stock levels by product</div><div id="legend1" class="legend"></div><div style="position:relative;height:240px;"><canvas id="chart1"></canvas></div></div>
-    <div class="card"><div class="card-title">Value distribution</div><div id="legend2" class="legend"></div><div style="position:relative;height:240px;"><canvas id="chart2"></canvas></div></div>
-  </div>
-  <div class="card" style="margin-bottom:1.5rem;">
-    <div class="card-title">Add new item</div>
-    <div class="add-form">
-      <div class="form-group"><label class="form-label">Product name</label><input type="text" id="f-name" placeholder="e.g. Laptop"/></div>
-      <div class="form-group"><label class="form-label">SKU</label><input type="text" id="f-sku" placeholder="e.g. LAP-001"/></div>
-      <div class="form-group"><label class="form-label">Category</label><input type="text" id="f-category" placeholder="e.g. Electronics"/></div>
-      <div class="form-group"><label class="form-label">Quantity</label><input type="number" id="f-qty" placeholder="10" min="0"/></div>
-      <div class="form-group"><label class="form-label">Price</label><input type="number" id="f-price" placeholder="99.99" min="0" step="0.01"/></div>
-      <div class="form-group"><label class="form-label">Reorder point</label><input type="number" id="f-reorder" placeholder="5" min="0"/></div>
-      <button class="btn btn-primary" onclick="addItem()">Add item</button>
+
+  <div id="tab-forecasting" class="tab-content">
+    <div class="page-title">Demand Forecasting</div>
+    <div class="page-sub">AI-powered demand predictions based on transaction history</div>
+    <div id="forecast-error"></div>
+    <div id="forecast-success"></div>
+    <div class="metrics" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+      <div class="metric m1"><div class="metric-label">Items tracked</div><div class="metric-value" id="f-total">-</div><div class="metric-sub">with forecasts</div></div>
+      <div class="metric m2"><div class="metric-label">Reorder needed</div><div class="metric-value" id="f-reorder-count">-</div><div class="metric-sub">items</div></div>
+      <div class="metric m4"><div class="metric-label">Critical</div><div class="metric-value" id="f-critical">-</div><div class="metric-sub">stockout in 3 days</div></div>
+      <div class="metric m5"><div class="metric-label">Avg confidence</div><div class="metric-value" id="f-confidence">-</div><div class="metric-sub">forecast accuracy</div></div>
+    </div>
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-header">
+        <div class="card-title">Stockout predictions</div>
+        <button class="btn btn-forecast" onclick="runForecast()">Run forecast now</button>
+      </div>
+      <div id="forecast-cards"><div class="loading">Loading forecasts...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Forecast details</div>
+      <div id="forecast-table"><div class="loading">Loading...</div></div>
     </div>
   </div>
-  <div class="card"><div class="card-title">All inventory items</div><div id="table-area"><div class="loading">Loading...</div></div></div>
 </main>
+
 <script>
 const API='https://ityntliklc.execute-api.ca-central-1.amazonaws.com/Inventory';
-const HEADERS={'Content-Type':'application/json','x-api-key':'Lq9qQ0qs6XemJrzGTG5HXRSnpNgi3ncG'};
+const FORECAST_API='https://ityntliklc.execute-api.ca-central-1.amazonaws.com/Forecasts';
+const KEY='Lq9qQ0qs6XemJrzGTG5HXRSnpNgi3ncG';
+const HDRS={'x-api-key':KEY};
+const POST_HDRS={'Content-Type':'application/json','x-api-key':KEY};
 const COLORS=['#2563eb','#0d9488','#d97706','#7c3aed','#e84545','#16a34a','#1d4ed8','#b45309'];
 let chart1,chart2;
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='forecasting') loadForecasts();
+}
+
 function ss(qty,rp){rp=rp||5;if(qty<=2)return['critical','Critical'];if(qty<=rp)return['low','Low stock'];return['ok','In stock'];}
 function bl(elId,labels,colors){document.getElementById(elId).innerHTML=labels.map((l,i)=>'<span class="legend-item"><span class="legend-dot" style="background:'+colors[i%colors.length]+'"></span>'+l+'</span>').join('');}
 function showError(msg){document.getElementById('error-area').innerHTML='<div class="error-msg">'+msg+'</div>';setTimeout(()=>document.getElementById('error-area').innerHTML='',5000);}
 function showSuccess(msg){document.getElementById('success-area').innerHTML='<div class="success-msg">'+msg+'</div>';setTimeout(()=>document.getElementById('success-area').innerHTML='',3000);}
 function openEditModal(item){document.getElementById('edit-id').value=item.id;document.getElementById('edit-name').value=item.name;document.getElementById('edit-sku').value=item.sku||'';document.getElementById('edit-category').value=item.category||'';document.getElementById('edit-qty').value=item.quantity;document.getElementById('edit-price').value=item.price;document.getElementById('edit-reorder').value=item.reorder_point||5;document.getElementById('editModal').classList.add('active');}
 function closeModal(){document.getElementById('editModal').classList.remove('active');}
-function saveEdit(){const id=document.getElementById('edit-id').value;const body={name:document.getElementById('edit-name').value,sku:document.getElementById('edit-sku').value,category:document.getElementById('edit-category').value,quantity:parseInt(document.getElementById('edit-qty').value),price:parseFloat(document.getElementById('edit-price').value),reorder_point:parseInt(document.getElementById('edit-reorder').value)||5};fetch(API+'/'+id,{method:'PUT',headers:{'Content-Type':'application/json','x-api-key':'Lq9qQ0qs6XemJrzGTG5HXRSnpNgi3ncG'},body:JSON.stringify(body)}).then(r=>r.json()).then(()=>{closeModal();showSuccess('Item updated!');loadData();}).catch(err=>showError('Failed: '+err.message));}
-function deleteItem(id,name){if(!confirm('Delete "'+name+'"?'))return;fetch(API+'/'+id,{method:'DELETE',headers:{'x-api-key':'Lq9qQ0qs6XemJrzGTG5HXRSnpNgi3ncG'}}).then(r=>r.json()).then(()=>{showSuccess('Deleted!');loadData();}).catch(err=>showError('Failed: '+err.message));}
+function saveEdit(){const id=document.getElementById('edit-id').value;const body={name:document.getElementById('edit-name').value,sku:document.getElementById('edit-sku').value,category:document.getElementById('edit-category').value,quantity:parseInt(document.getElementById('edit-qty').value),price:parseFloat(document.getElementById('edit-price').value),reorder_point:parseInt(document.getElementById('edit-reorder').value)||5};fetch(API+'/'+id,{method:'PUT',headers:POST_HDRS,body:JSON.stringify(body)}).then(r=>r.json()).then(()=>{closeModal();showSuccess('Item updated!');loadData();}).catch(err=>showError('Failed: '+err.message));}
+function deleteItem(id,name){if(!confirm('Delete "'+name+'"?'))return;fetch(API+'/'+id,{method:'DELETE',headers:HDRS}).then(r=>r.json()).then(()=>{showSuccess('Deleted!');loadData();}).catch(err=>showError('Failed: '+err.message));}
+
 function loadData(){
   document.getElementById('last-updated').textContent='Loading...';
-  fetch(API,{headers:{'x-api-key':'Lq9qQ0qs6XemJrzGTG5HXRSnpNgi3ncG'}}).then(r=>r.json()).then(data=>{
+  fetch(API,{headers:HDRS}).then(r=>r.json()).then(data=>{
     const raw=Array.isArray(data)?data:(data.items||[]);
     document.getElementById('api-version').textContent=data.version||'v1';
     document.getElementById('last-updated').textContent='Updated '+new Date().toLocaleTimeString();
@@ -160,7 +231,7 @@ function loadData(){
     document.getElementById('m-units').textContent=totalUnits;
     document.getElementById('m-value').textContent='$'+totalValue.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
     document.getElementById('m-alerts').textContent=lowStock.length;
-    document.getElementById('alert-area').innerHTML=lowStock.length>0?'<div class="alert-banner"><div class="alert-dot"></div><span>Low stock: <strong>'+lowStock.map(i=>i.name).join(', ')+'</strong> need reordering</span></div>':'';
+    document.getElementById('alert-area').innerHTML=lowStock.length>0?'<div class="alert-banner"><div class="alert-dot"></div><span>Low stock warning: <strong>'+lowStock.map(i=>i.name).join(', ')+'</strong> need reordering</span></div>':'';
     const labels=items.map(i=>i.name);
     const qtys=items.map(i=>i.quantity);
     const vals=items.map(i=>parseFloat((i.quantity*i.price).toFixed(2)));
@@ -173,7 +244,73 @@ function loadData(){
     document.getElementById('table-area').innerHTML='<table><thead><tr><th style="width:40px">ID</th><th style="width:110px">Product</th><th style="width:75px">SKU</th><th style="width:90px">Category</th><th style="width:45px;text-align:right">Qty</th><th style="width:55px;text-align:right">Reorder</th><th style="width:80px;text-align:right">Price</th><th style="width:90px;text-align:right">Value</th><th style="width:80px;text-align:center">Status</th><th style="width:110px;text-align:center">Actions</th></tr></thead><tbody>'+items.map(i=>{const[cls,label]=ss(i.quantity,i.reorder_point);return'<tr><td style="color:var(--text-tertiary);font-family:DM Mono,monospace">#'+i.id+'</td><td style="font-weight:500">'+i.name+'</td><td style="font-family:DM Mono,monospace;color:var(--text-secondary)">'+(i.sku||'-')+'</td><td>'+(i.category?'<span class="cat-badge">'+i.category+'</span>':'-')+'</td><td style="text-align:right;font-family:DM Mono,monospace">'+i.quantity+'</td><td style="text-align:right;font-family:DM Mono,monospace">'+(i.reorder_point||5)+'</td><td style="text-align:right;font-family:DM Mono,monospace">$'+i.price.toFixed(2)+'</td><td style="text-align:right;font-family:DM Mono,monospace">$'+(i.quantity*i.price).toLocaleString('en-US',{minimumFractionDigits:2})+'</td><td style="text-align:center"><span class="badge badge-'+cls+'">'+label+'</span></td><td style="text-align:center;white-space:nowrap"><button class="btn btn-edit" onclick="openEditModal(window._items.find(x=>x.id==='+i.id+'))">Edit</button> <button class="btn btn-danger" onclick="deleteItem('+i.id+',\''+i.name+'\')">Del</button></td></tr>';}).join('')+'</tbody></table>';
   }).catch(err=>{document.getElementById('last-updated').textContent='Failed';showError('Could not connect: '+err.message);});
 }
-function addItem(){const name=document.getElementById('f-name').value.trim();const sku=document.getElementById('f-sku').value.trim();const category=document.getElementById('f-category').value.trim();const qty=parseInt(document.getElementById('f-qty').value);const price=parseFloat(document.getElementById('f-price').value);const reorder=parseInt(document.getElementById('f-reorder').value)||5;if(!name||isNaN(qty)||isNaN(price)){showError('Fill in name, quantity and price.');return;}fetch(API,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':'Lq9qQ0qs6XemJrzGTG5HXRSnpNgi3ncG'},body:JSON.stringify({name,sku,category,quantity:qty,price,reorder_point:reorder})}).then(r=>r.json()).then(()=>{document.getElementById('f-name').value='';document.getElementById('f-sku').value='';document.getElementById('f-category').value='';document.getElementById('f-qty').value='';document.getElementById('f-price').value='';document.getElementById('f-reorder').value='';showSuccess('Item added!');loadData();}).catch(err=>showError('Failed: '+err.message));}
+
+function runForecast(){
+  document.getElementById('forecast-cards').innerHTML='<div class="loading">Running forecast...</div>';
+  fetch(FORECAST_API,{method:'POST',headers:POST_HDRS}).then(r=>r.json()).then(()=>{
+    document.getElementById('forecast-success').innerHTML='<div class="success-msg">Forecasts updated successfully!</div>';
+    setTimeout(()=>document.getElementById('forecast-success').innerHTML='',3000);
+    loadForecasts();
+  }).catch(err=>{document.getElementById('forecast-error').innerHTML='<div class="error-msg">Failed: '+err.message+'</div>';});
+}
+
+function loadForecasts(){
+  document.getElementById('forecast-cards').innerHTML='<div class="loading">Loading forecasts...</div>';
+  fetch(FORECAST_API,{headers:HDRS}).then(r=>r.json()).then(data=>{
+    const forecasts=data.forecasts||[];
+    const reorderNeeded=forecasts.filter(f=>f.reorder_needed);
+    const critical=forecasts.filter(f=>f.urgency==='critical');
+    const avgConf=forecasts.length>0?Math.round(forecasts.reduce((s,f)=>s+(f.confidence||0),0)/forecasts.length):0;
+    document.getElementById('f-total').textContent=forecasts.length;
+    document.getElementById('f-reorder-count').textContent=reorderNeeded.length;
+    document.getElementById('f-critical').textContent=critical.length;
+    document.getElementById('f-confidence').textContent=avgConf+'%';
+
+    const sorted=[...forecasts].sort((a,b)=>(a.days_until_stockout||999)-(b.days_until_stockout||999));
+    document.getElementById('forecast-cards').innerHTML='<div class="forecast-grid">'+sorted.map(f=>{
+      const cls=f.urgency==='critical'?'critical':f.urgency==='warning'?'warning':'';
+      const days=f.days_until_stockout;
+      const conf=f.confidence||0;
+      return'<div class="forecast-card '+cls+'">'+
+        '<div class="forecast-name">'+f.name+'</div>'+
+        '<div class="forecast-days">'+(days>=999?'Safe':days)+'</div>'+
+        '<div class="forecast-sub">'+(days>=999?'days of stock':'days until stockout')+'</div>'+
+        '<div class="forecast-demand">Daily demand: '+(f.daily_demand||0)+' units</div>'+
+        '<div class="forecast-demand">Stock: '+f.current_stock+' units</div>'+
+        (f.reorder_needed?'<div style="margin-top:6px"><span class="badge badge-critical">Reorder now</span></div>':'<div style="margin-top:6px"><span class="badge badge-ok">OK</span></div>')+
+        '<div class="confidence-bar"><div class="confidence-fill" style="width:'+conf+'%"></div></div>'+
+        '<div style="font-size:10px;color:var(--text-tertiary);margin-top:3px">Confidence: '+conf+'%</div>'+
+        '</div>';
+    }).join('')+'</div>';
+
+    document.getElementById('forecast-table').innerHTML='<table><thead><tr><th style="width:120px">Product</th><th style="width:80px;text-align:right">Stock</th><th style="width:90px;text-align:right">Daily demand</th><th style="width:90px;text-align:right">30 day forecast</th><th style="width:90px;text-align:right">60 day forecast</th><th style="width:90px;text-align:right">Days left</th><th style="width:80px;text-align:center">Confidence</th><th style="width:100px;text-align:center">Status</th></tr></thead><tbody>'+
+    sorted.map(f=>{
+      const urgency=f.urgency==='critical'?'badge-critical':f.urgency==='warning'?'badge-warning':'badge-ok';
+      const label=f.urgency==='critical'?'Critical':f.urgency==='warning'?'Reorder':'On track';
+      return'<tr>'+
+        '<td style="font-weight:500">'+f.name+'</td>'+
+        '<td style="text-align:right;font-family:DM Mono,monospace">'+f.current_stock+'</td>'+
+        '<td style="text-align:right;font-family:DM Mono,monospace">'+(f.daily_demand||0)+'</td>'+
+        '<td style="text-align:right;font-family:DM Mono,monospace">'+(f.forecast_30_days||'-')+'</td>'+
+        '<td style="text-align:right;font-family:DM Mono,monospace">'+(f.forecast_60_days||'-')+'</td>'+
+        '<td style="text-align:right;font-family:DM Mono,monospace">'+(f.days_until_stockout>=999?'Safe':f.days_until_stockout+' days')+'</td>'+
+        '<td style="text-align:center">'+f.confidence+'%</td>'+
+        '<td style="text-align:center"><span class="badge '+urgency+'">'+label+'</span></td>'+
+        '</tr>';
+    }).join('')+'</tbody></table>';
+  }).catch(err=>{document.getElementById('forecast-error').innerHTML='<div class="error-msg">Could not load forecasts: '+err.message+'</div>';});
+}
+
+function addItem(){
+  const name=document.getElementById('f-name').value.trim();
+  const sku=document.getElementById('f-sku').value.trim();
+  const category=document.getElementById('f-category').value.trim();
+  const qty=parseInt(document.getElementById('f-qty').value);
+  const price=parseFloat(document.getElementById('f-price').value);
+  const reorder=parseInt(document.getElementById('f-reorder').value)||5;
+  if(!name||isNaN(qty)||isNaN(price)){showError('Fill in name, quantity and price.');return;}
+  fetch(API,{method:'POST',headers:POST_HDRS,body:JSON.stringify({name,sku,category,quantity:qty,price,reorder_point:reorder})}).then(r=>r.json()).then(()=>{document.getElementById('f-name').value='';document.getElementById('f-sku').value='';document.getElementById('f-category').value='';document.getElementById('f-qty').value='';document.getElementById('f-price').value='';document.getElementById('f-reorder').value='';showSuccess('Item added!');loadData();}).catch(err=>showError('Failed: '+err.message));}
+
 loadData();
 </script>
 </body>
