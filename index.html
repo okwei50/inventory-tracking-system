@@ -113,6 +113,7 @@
 <div class="tabs">
   <button class="tab active" onclick="switchTab('inventory',this)">Inventory</button>
   <button class="tab" onclick="switchTab('forecasting',this)">Demand Forecasting</button>
+  <button class="tab" onclick="switchTab('safetystock',this)">Safety Stock</button>
 </div>
 
 <div class="modal-overlay" id="editModal">
@@ -189,11 +190,38 @@
       <div id="forecast-table"><div class="loading">Loading...</div></div>
     </div>
   </div>
+
+  <div id="tab-safetystock" class="tab-content">
+    <div class="page-title">Safety Stock Optimizer</div>
+    <div class="page-sub">Optimal buffer stock calculations using demand variability and lead times</div>
+    <div id="ss-error"></div>
+    <div id="ss-success"></div>
+    <div class="metrics" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      <div class="metric m1"><div class="metric-label">Items optimized</div><div class="metric-value" id="ss-total">-</div><div class="metric-sub">with safety stock</div></div>
+      <div class="metric m3"><div class="metric-label">Avg safety stock</div><div class="metric-value" id="ss-avg">-</div><div class="metric-sub">units buffer</div></div>
+      <div class="metric m5"><div class="metric-label">Service level</div><div class="metric-value" id="ss-level">95%</div><div class="metric-sub">target fill rate</div></div>
+    </div>
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-header">
+        <div class="card-title">Safety stock calculations</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="ss-service-level" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);">
+            <option value="0.90">90% service level</option>
+            <option value="0.95" selected>95% service level</option>
+            <option value="0.99">99% service level</option>
+          </select>
+          <button class="btn btn-forecast" onclick="runSafetyStock()">Calculate now</button>
+        </div>
+      </div>
+      <div id="ss-table"><div class="loading">Loading safety stock data...</div></div>
+    </div>
+  </div>
 </main>
 
 <script>
 const API='https://ityntliklc.execute-api.ca-central-1.amazonaws.com/Inventory';
 const FORECAST_API='https://ityntliklc.execute-api.ca-central-1.amazonaws.com/Forecasts';
+const SS_API='https://ityntliklc.execute-api.ca-central-1.amazonaws.com/SafetyStock';
 const KEY='Lq9qQ0qs6XemJrzGTG5HXRSnpNgi3ncG';
 const HDRS={'x-api-key':KEY};
 const POST_HDRS={'Content-Type':'application/json','x-api-key':KEY};
@@ -206,6 +234,7 @@ function switchTab(name,btn){
   document.getElementById('tab-'+name).classList.add('active');
   btn.classList.add('active');
   if(name==='forecasting') loadForecasts();
+  if(name==='safetystock') loadSafetyStock();
 }
 
 function ss(qty,rp){rp=rp||5;if(qty<=2)return['critical','Critical'];if(qty<=rp)return['low','Low stock'];return['ok','In stock'];}
@@ -216,6 +245,52 @@ function openEditModal(item){document.getElementById('edit-id').value=item.id;do
 function closeModal(){document.getElementById('editModal').classList.remove('active');}
 function saveEdit(){const id=document.getElementById('edit-id').value;const body={name:document.getElementById('edit-name').value,sku:document.getElementById('edit-sku').value,category:document.getElementById('edit-category').value,quantity:parseInt(document.getElementById('edit-qty').value),price:parseFloat(document.getElementById('edit-price').value),reorder_point:parseInt(document.getElementById('edit-reorder').value)||5};fetch(API+'/'+id,{method:'PUT',headers:POST_HDRS,body:JSON.stringify(body)}).then(r=>r.json()).then(()=>{closeModal();showSuccess('Item updated!');loadData();}).catch(err=>showError('Failed: '+err.message));}
 function deleteItem(id,name){if(!confirm('Delete "'+name+'"?'))return;fetch(API+'/'+id,{method:'DELETE',headers:HDRS}).then(r=>r.json()).then(()=>{showSuccess('Deleted!');loadData();}).catch(err=>showError('Failed: '+err.message));}
+
+
+function runSafetyStock(){
+  const level = parseFloat(document.getElementById('ss-service-level').value);
+  document.getElementById('ss-table').innerHTML='<div class="loading">Calculating safety stock...</div>';
+  fetch(SS_API,{method:'POST',headers:POST_HDRS,body:JSON.stringify({service_level:level})})
+  .then(r=>r.json()).then(data=>{
+    document.getElementById('ss-success').innerHTML='<div class="success-msg">Safety stock calculated at '+data.service_level+' service level!</div>';
+    setTimeout(()=>document.getElementById('ss-success').innerHTML='',3000);
+    loadSafetyStock();
+  }).catch(err=>document.getElementById('ss-error').innerHTML='<div class="error-msg">Failed: '+err.message+'</div>');
+}
+
+function loadSafetyStock(){
+  fetch(SS_API,{headers:HDRS}).then(r=>r.json()).then(data=>{
+    const items = data.safety_stock || [];
+    const withSS = items.filter(i=>i.optimal_safety_stock !== null);
+    const avgSS = withSS.length > 0 ? Math.round(withSS.reduce((s,i)=>s+(i.optimal_safety_stock||0),0)/withSS.length) : 0;
+    document.getElementById('ss-total').textContent = items.length;
+    document.getElementById('ss-avg').textContent = avgSS;
+    document.getElementById('ss-table').innerHTML =
+      '<table><thead><tr>'+
+      '<th style="width:40px">ID</th>'+
+      '<th style="width:120px">Product</th>'+
+      '<th style="width:80px;text-align:right">Current stock</th>'+
+      '<th style="width:90px;text-align:right">Safety stock</th>'+
+      '<th style="width:100px;text-align:right">Reorder point</th>'+
+      '<th style="width:80px;text-align:right">Lead time</th>'+
+      '<th style="width:90px;text-align:center">Last calculated</th>'+
+      '</tr></thead><tbody>'+
+      items.map(i=>{
+        const ss = i.optimal_safety_stock;
+        const calc = i.calculated_at ? new Date(i.calculated_at).toLocaleDateString() : 'Not yet';
+        return '<tr>'+
+          '<td style="color:var(--text-tertiary);font-family:DM Mono,monospace">#'+i.id+'</td>'+
+          '<td style="font-weight:500">'+i.name+'</td>'+
+          '<td style="text-align:right;font-family:DM Mono,monospace">'+i.current_stock+'</td>'+
+          '<td style="text-align:right;font-family:DM Mono,monospace">'+(ss !== null ? ss+' units' : '-')+'</td>'+
+          '<td style="text-align:right;font-family:DM Mono,monospace">'+i.current_reorder_point+'</td>'+
+          '<td style="text-align:right;font-family:DM Mono,monospace">'+(i.lead_time_days||7)+' days</td>'+
+          '<td style="text-align:center;font-size:11px;color:var(--text-secondary)">'+calc+'</td>'+
+          '</tr>';
+      }).join('')+
+      '</tbody></table>';
+  }).catch(err=>document.getElementById('ss-error').innerHTML='<div class="error-msg">Could not load: '+err.message+'</div>');
+}
 
 function loadData(){
   document.getElementById('last-updated').textContent='Loading...';
