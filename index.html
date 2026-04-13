@@ -84,6 +84,8 @@
     .modal-title{font-size:16px;font-weight:600;margin-bottom:1.25rem;}
     .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem;}
     .modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+    .btn-sale{background:#f0fdf4;color:#16a34a;border-color:rgba(22,163,74,0.2);font-size:11px;padding:4px 10px;}
+    .btn-sale:hover{background:#16a34a;color:#fff;}
     .forecast-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:1.5rem;}
     .forecast-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;}
     .forecast-card.critical{border-color:rgba(220,38,38,0.3);background:var(--red-light);}
@@ -241,6 +243,41 @@ function ss(qty,rp){rp=rp||5;if(qty<=2)return['critical','Critical'];if(qty<=rp)
 function bl(elId,labels,colors){document.getElementById(elId).innerHTML=labels.map((l,i)=>'<span class="legend-item"><span class="legend-dot" style="background:'+colors[i%colors.length]+'"></span>'+l+'</span>').join('');}
 function showError(msg){document.getElementById('error-area').innerHTML='<div class="error-msg">'+msg+'</div>';setTimeout(()=>document.getElementById('error-area').innerHTML='',5000);}
 function showSuccess(msg){document.getElementById('success-area').innerHTML='<div class="success-msg">'+msg+'</div>';setTimeout(()=>document.getElementById('success-area').innerHTML='',3000);}
+
+function openSaleModal(item){
+  document.getElementById('sale-id').value=item.id;
+  document.getElementById('sale-current-qty').value=item.quantity;
+  document.getElementById('sale-name').value=item.name;
+  document.getElementById('sale-qty').value='';
+  document.getElementById('sale-notes').value='';
+  document.getElementById('saleModal').classList.add('active');
+}
+function closeSaleModal(){document.getElementById('saleModal').classList.remove('active');}
+function saveSale(){
+  const id=document.getElementById('sale-id').value;
+  const currentQty=parseInt(document.getElementById('sale-current-qty').value);
+  const soldQty=parseInt(document.getElementById('sale-qty').value);
+  const notes=document.getElementById('sale-notes').value||'Sale recorded';
+  const name=document.getElementById('sale-name').value;
+  if(isNaN(soldQty)||soldQty<=0){showError('Please enter a valid quantity sold.');return;}
+  if(soldQty>currentQty){showError('Cannot sell more than current stock ('+currentQty+' units).');return;}
+  const newQty=currentQty-soldQty;
+  fetch(API+'/'+id,{
+    method:'PUT',
+    headers:POST_HDRS,
+    body:JSON.stringify({
+      name:name,
+      quantity:newQty,
+      transaction_type:'sale',
+      notes:notes
+    })
+  }).then(r=>r.json()).then(()=>{
+    closeSaleModal();
+    showSuccess('Sale of '+soldQty+' '+name+' recorded successfully!');
+    loadData();
+  }).catch(err=>showError('Failed: '+err.message));
+}
+
 function openEditModal(item){document.getElementById('edit-id').value=item.id;document.getElementById('edit-name').value=item.name;document.getElementById('edit-sku').value=item.sku||'';document.getElementById('edit-category').value=item.category||'';document.getElementById('edit-qty').value=item.quantity;document.getElementById('edit-price').value=item.price;document.getElementById('edit-reorder').value=item.reorder_point||5;document.getElementById('editModal').classList.add('active');}
 function closeModal(){document.getElementById('editModal').classList.remove('active');}
 function saveEdit(){const id=document.getElementById('edit-id').value;const body={name:document.getElementById('edit-name').value,sku:document.getElementById('edit-sku').value,category:document.getElementById('edit-category').value,quantity:parseInt(document.getElementById('edit-qty').value),price:parseFloat(document.getElementById('edit-price').value),reorder_point:parseInt(document.getElementById('edit-reorder').value)||5};fetch(API+'/'+id,{method:'PUT',headers:POST_HDRS,body:JSON.stringify(body)}).then(r=>r.json()).then(()=>{closeModal();showSuccess('Item updated!');loadData();}).catch(err=>showError('Failed: '+err.message));}
@@ -388,5 +425,31 @@ function addItem(){
 
 loadData();
 </script>
+
+<div class="modal-overlay" id="saleModal">
+  <div class="modal">
+    <div class="modal-title">Record sale</div>
+    <input type="hidden" id="sale-id"/>
+    <input type="hidden" id="sale-current-qty"/>
+    <div class="modal-grid">
+      <div class="form-group" style="grid-column:span 2">
+        <label class="form-label">Product</label>
+        <input type="text" id="sale-name" disabled style="opacity:0.6"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Units sold</label>
+        <input type="number" id="sale-qty" min="1" placeholder="e.g. 2"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes (optional)</label>
+        <input type="text" id="sale-notes" placeholder="e.g. Online order"/>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeSaleModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSale()">Record sale</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

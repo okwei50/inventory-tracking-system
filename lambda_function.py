@@ -180,9 +180,9 @@ def lambda_handler(event, context):
                     "body": json.dumps({"error": "Item ID required"})
                 }
             body = json.loads(event['body'])
-            cur.execute("""
-                SELECT quantity FROM inventory WHERE id = %s
-            """, (item_id,))
+            transaction_type = body.get('transaction_type', None)
+
+            cur.execute("SELECT quantity, name FROM inventory WHERE id = %s", (item_id,))
             old_row = cur.fetchone()
             if not old_row:
                 return {
@@ -191,7 +191,9 @@ def lambda_handler(event, context):
                     "body": json.dumps({"error": "Item not found"})
                 }
             old_quantity = old_row[0]
+            old_name = old_row[1]
             new_quantity = body.get('quantity', old_quantity)
+
             cur.execute("""
                 UPDATE inventory
                 SET name = %s,
@@ -204,7 +206,7 @@ def lambda_handler(event, context):
                     last_updated = NOW()
                 WHERE id = %s
             """, (
-                body.get('name'),
+                body.get('name', old_name),
                 new_quantity,
                 body.get('price'),
                 body.get('sku'),
@@ -213,21 +215,34 @@ def lambda_handler(event, context):
                 body.get('category'),
                 item_id
             ))
+
             quantity_diff = new_quantity - old_quantity
             if quantity_diff != 0:
-                transaction_type = 'restock' if quantity_diff > 0 else 'sale'
+                if transaction_type:
+                    tx_type = transaction_type
+                else:
+                    tx_type = 'restock' if quantity_diff > 0 else 'sale'
+                notes = body.get('notes', 'Manual update')
                 cur.execute("""
                     INSERT INTO inventory_transactions
                     (inventory_id, transaction_type, quantity, notes)
                     VALUES (%s, %s, %s, %s)
-                """, (item_id, transaction_type, abs(quantity_diff), 'Manual update'))
+                """, (item_id, tx_type, abs(quantity_diff), notes))
+
             conn.commit()
             cur.close()
             conn.close()
+
+            tx_message = ""
+            if quantity_diff < 0:
+                tx_message = f" Sale of {abs(quantity_diff)} units recorded."
+            elif quantity_diff > 0:
+                tx_message = f" Restock of {quantity_diff} units recorded."
+
             return {
                 "statusCode": 200,
                 "headers": headers,
-                "body": json.dumps("Item updated successfully")
+                "body": json.dumps("Item updated successfully." + tx_message)
             }
 
         elif method == 'DELETE':
@@ -238,6 +253,9 @@ def lambda_handler(event, context):
                     "body": json.dumps({"error": "Item ID required"})
                 }
             cur.execute("DELETE FROM inventory_transactions WHERE inventory_id = %s", (item_id,))
+            cur.execute("DELETE FROM forecasts WHERE inventory_id = %s", (item_id,))
+            cur.execute("DELETE FROM safety_stock WHERE inventory_id = %s", (item_id,))
+            cur.execute("DELETE FROM purchase_orders WHERE inventory_id = %s", (item_id,))
             cur.execute("DELETE FROM inventory WHERE id = %s", (item_id,))
             conn.commit()
             cur.close()
