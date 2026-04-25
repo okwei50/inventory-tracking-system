@@ -618,6 +618,7 @@ loadData();
 </html><script>
 // Darius Chat
 const DARIUS_API = 'https://wqbkjnov2e.execute-api.ca-central-1.amazonaws.com/prod/ask-darius';
+const DARIUS_SESSION = 'session-' + Date.now();
 
 async function askDarius() {
   const input = document.getElementById('darius-input');
@@ -650,7 +651,7 @@ async function askDarius() {
     const res = await fetch(DARIUS_API, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({question})
+      body: JSON.stringify({question, session_id: DARIUS_SESSION})
     });
     const data = await res.json();
 
